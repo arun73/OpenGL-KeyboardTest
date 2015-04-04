@@ -2,7 +2,7 @@
 #include <sstream>
 #include <GL/freeglut.h>
 
-#define NUM_SQUARES 2
+#define NUM_SQUARES 4
 
 using namespace std;
 
@@ -12,13 +12,15 @@ void idleFunc();
 void normalKeys(unsigned char key, int x, int y);
 void normalKeysUp(unsigned char key, int x, int y);
 void specialKeys(int key, int x, int y);
+void reshape(int w, int h);
+void displayMessages();
 
 GLfloat xPos[NUM_SQUARES];
 GLfloat yPos[NUM_SQUARES];
 GLfloat color[NUM_SQUARES][3];
 GLfloat speed = 0.001;
 GLint curSquare;
-stringstream strstream1, strstream2;
+stringstream strstream1, strstream2, strstream3;
 
 enum key_state {
     INACTIVE, ACTIVE
@@ -36,6 +38,7 @@ int main(int argc, char **argv) {
     glutKeyboardUpFunc(normalKeysUp);
     glutSpecialFunc(specialKeys);
     glutIdleFunc(idleFunc);
+    glutReshapeFunc(reshape);
 
     init();
 
@@ -59,26 +62,47 @@ void init() {
 
     strstream1 << "Choose 1-" << NUM_SQUARES << " to select the square";
     strstream2 << "Square selected: " << curSquare+1;
+    strstream3 << "Help:\n\tw - up\n\ts - down\n\td - right\n\ta - left" << endl;
 
+}
+
+void reshape(int w, int h) {
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    if (w <= h)
+        glOrtho(-2, 2, -2 * (GLfloat) h / (GLfloat) w, 2 * (GLfloat) h / (GLfloat) w, -2, 2);
+    else
+        glOrtho(-2 * (GLfloat) w / (GLfloat) h, 2 * (GLfloat) w / (GLfloat) h, -2, 2, -2, 2);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+void displayMessages() {
+
+    glLoadIdentity();
+    glColor3f(0, 0, 0);
+    glRasterPos2f((GLfloat) -1.9, 1.5);
+    glutBitmapString(GLUT_BITMAP_HELVETICA_18, (unsigned char const *) strstream1.str().c_str());
+
+    glLoadIdentity();
+    glRasterPos2d((GLfloat) -1.9, 1.2);
+    glutBitmapString(GLUT_BITMAP_HELVETICA_12, (unsigned char const *) strstream2.str().c_str());
+
+    glLoadIdentity();
+    glRasterPos2d((GLfloat) -1.9, -1.2);
+    glutBitmapString(GLUT_BITMAP_HELVETICA_12, (unsigned char const *) strstream3.str().c_str());
 }
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glLoadIdentity();
-    glColor3f(0, 0, 0);
-    glRasterPos2f((GLfloat) -0.9, 0.9);
-    glutBitmapString(GLUT_BITMAP_HELVETICA_18, (unsigned char const *) strstream1.str().c_str());
+    displayMessages();
 
-    glLoadIdentity();
-    glRasterPos2d((GLfloat) -0.9, 0.7);
-    glutBitmapString(GLUT_BITMAP_HELVETICA_12, (unsigned char const *) strstream2.str().c_str());
-
-    glPushMatrix();
+//    glPushMatrix();
     for (int i = 0; i < NUM_SQUARES; ++i) {
         glLoadIdentity();
         glTranslatef(xPos[i], yPos[i], 0);
-        glScalef(0.05, 0.05, 1);
+        glScalef(0.1, 0.1, 1);
 
         glColor3fv(color[i]);
 
@@ -88,8 +112,23 @@ void display() {
         glVertex2f(1, 1);
         glVertex2f(-1, 1);
         glEnd();
+
+        if (i == curSquare) {
+            glColor3f(0, 0, 0);
+            glBegin(GL_LINE_LOOP);
+            glVertex2f(-1, -1);
+            glVertex2f(1, -1);
+            glVertex2f(1, 1);
+            glVertex2f(-1, 1);
+            glEnd();
+        }
+
+        glLoadIdentity();
+        glColor3f(0, 0, 0);
+        glRasterPos2f((GLfloat) (xPos[i]-0.02), (GLfloat) (yPos[i]-0.02));
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, '1'+i);
     }
-    glPopMatrix();
+//    glPopMatrix();
 
     glFlush();
 }
@@ -107,23 +146,23 @@ void idleFunc() {
 
     if (keyStatus['w']) {
         yPos[curSquare] += speed;
-        if (yPos[curSquare] >= 0.93)
-            yPos[curSquare] = 0.93;
+        if (yPos[curSquare] >= 1.9)
+            yPos[curSquare] = 1.9;
     }
     if (keyStatus['s']) {
         yPos[curSquare] -= speed;
-        if (yPos[curSquare] <= -0.93)
-            yPos[curSquare] = (GLfloat) -0.93;
+        if (yPos[curSquare] <= -1.9)
+            yPos[curSquare] = (GLfloat) -1.9;
     }
     if (keyStatus['d']) {
         xPos[curSquare] += speed;
-        if (xPos[curSquare] >= 0.93)
-            xPos[curSquare] = 0.93;
+        if (xPos[curSquare] >= 1.9)
+            xPos[curSquare] = 1.9;
     }
     if (keyStatus['a']) {
         xPos[curSquare] -= speed;
-        if (xPos[curSquare] <= -0.93)
-            xPos[curSquare] = (GLfloat) -0.93;
+        if (xPos[curSquare] <= -1.9)
+            xPos[curSquare] = (GLfloat) -1.9;
     }
     glutPostRedisplay();
 }
